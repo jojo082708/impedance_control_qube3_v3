@@ -139,7 +139,15 @@ class ImpedanceControlPanel(tk.Tk):
     # ── 左欄 ──────────────────────────────────────────────────────────────────
 
     def _build_left(self, parent):
-        # 馬達參數（唯讀顯示）
+        self._build_motor_params_card(parent)
+        self._build_impedance_card(parent)
+        self._build_pd_card(parent)
+        self._build_target_angle_card(parent)
+        self._build_experiment_card(parent)
+        self._build_safety_info_card(parent)
+        self._build_action_buttons(parent)
+
+    def _build_motor_params_card(self, parent):
         cp = self._card(parent, "🔧  馬達參數（常數）")
         for lbl, val, unit in [
             ("Kt  力矩常數", f"{Kt:.4f}",       "N·m/A"),
@@ -158,7 +166,7 @@ class ImpedanceControlPanel(tk.Tk):
                  font=("Consolas", 8), bg=self.PANEL, fg=self.SUBTEXT,
                  wraplength=320, justify="left").pack(anchor="w", pady=(4, 0))
 
-        # 阻抗參數
+    def _build_impedance_card(self, parent):
         ci = self._card(parent, "🎛  阻抗參數  （即時生效）")
         self._K_var  = tk.DoubleVar(value=1.0)
         self._B_var  = tk.DoubleVar(value=0.1)
@@ -180,7 +188,7 @@ class ImpedanceControlPanel(tk.Tk):
         for v in [self._K_var, self._B_var, self._M_var]:
             v.trace_add("write", lambda *_: self._sync_params())
 
-        # 內迴路 PD
+    def _build_pd_card(self, parent):
         cpd = self._card(parent, "⚡  內迴路 PD 控制器")
         self._Kp_var = tk.DoubleVar(value=20.0)
         self._Kd_var = tk.DoubleVar(value=0.5)
@@ -191,7 +199,7 @@ class ImpedanceControlPanel(tk.Tk):
         for v in [self._Kp_var, self._Kd_var]:
             v.trace_add("write", lambda *_: self._sync_params())
 
-        # 目標角度
+    def _build_target_angle_card(self, parent):
         cth = self._card(parent, "🎯  目標角度")
         self._theta_d_var = tk.DoubleVar(value=0.0)
         ParamWidget(cth, "θ_d  目標角度", self._theta_d_var,
@@ -199,7 +207,7 @@ class ImpedanceControlPanel(tk.Tk):
                     fmt="{:.3f}", slider_length=95).pack(fill="x", pady=3)
         self._theta_d_var.trace_add("write", lambda *_: self._sync_params())
 
-        # 實驗設定
+    def _build_experiment_card(self, parent):
         ce = self._card(parent, "🔁  實驗設定")
         self._exp_time_var     = tk.DoubleVar(value=30.0)
         self._sample_time_var  = tk.DoubleVar(value=0.002)
@@ -227,7 +235,7 @@ class ImpedanceControlPanel(tk.Tk):
                  font=("Consolas", 10, "bold"),
                  bg=self.PANEL, fg=self.ACCENT2).pack(anchor="w", pady=(4, 0))
 
-        # 安全限制（唯讀顯示）
+    def _build_safety_info_card(self, parent):
         cs = self._card(parent, "🛡  安全限制（固定）")
         for lbl, val in [
             ("角度限制", f"±{math.degrees(ANGLE_LIMIT_RAD):.0f}°"),
@@ -243,7 +251,7 @@ class ImpedanceControlPanel(tk.Tk):
             tk.Label(row, text=val, font=("Consolas", 9, "bold"),
                      bg=self.PANEL, fg=self.WARN).pack(side="left")
 
-        # 操作按鈕
+    def _build_action_buttons(self, parent):
         cb = self._card(parent, "")
         self._device_var = tk.StringVar(value="裝置：—")
         tk.Label(cb, textvariable=self._device_var,
@@ -783,17 +791,6 @@ class ImpedanceControlPanel(tk.Tk):
                       activebackground=self.BORDER, cursor="hand2")
         b.pack(fill="x", pady=2)
         return b
-
-    def _labeled_combo(self, parent, label: str,
-                       values: list, default: str) -> tk.StringVar:
-        row = tk.Frame(parent, bg=self.PANEL); row.pack(fill="x", pady=2)
-        tk.Label(row, text=label, width=10, anchor="w",
-                 font=self.FONT_BODY, bg=self.PANEL,
-                 fg=self.SUBTEXT).pack(side="left")
-        var = tk.StringVar(value=default)
-        ttk.Combobox(row, textvariable=var, values=values,
-                     state="readonly", width=14).pack(side="left", padx=4)
-        return var
 
     def _tick_clock(self):
         self._clock_var.set(

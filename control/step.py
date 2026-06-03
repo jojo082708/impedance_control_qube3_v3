@@ -4,7 +4,6 @@ control/step.py — 單一控制步驟的計算邏輯。
 將感測器讀值 → 外力估算 → 阻抗動力學 → PD 控制器 → 電壓輸出
 包裝成一個純計算函式 run_step()，方便測試與替換。
 """
-import numpy as np
 from config import Kt, J_motor, B_friction, VOLTAGE_LIMIT, ROW_FIELDS
 
 
@@ -73,8 +72,8 @@ def run_step(theta: float, current: float,
     # ── 內迴路 PD 控制器 ───────────────────────────────────────────────────
     error_pos   = theta_cmd - theta
     error_vel   = ctx.imp_dyn.velocity - omega
-    voltage     = float(np.clip(Kp * error_pos + Kd * error_vel,
-                                -VOLTAGE_LIMIT, VOLTAGE_LIMIT))
+    voltage_raw = Kp * error_pos + Kd * error_vel
+    voltage     = max(-VOLTAGE_LIMIT, min(VOLTAGE_LIMIT, float(voltage_raw)))
 
     row = _make_row(rnd, timestamp, theta, theta_d, theta_cmd,
                     omega, voltage, current, force_est, K, B, M, Kp, Kd)
